@@ -11,10 +11,10 @@ function opengraph_site_information() {
     '#type' => 'fieldset',
     '#title' => t('Basic information'),
   );
-  $form['basic_fs']['opengraph_site_name'] = array(
+  $form['basic_fs']['site_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
-    '#default_value' => variable_get('opengraph_site_name', variable_get('site_name', 'Drupal')),
+    '#default_value' => variable_get('site_name', 'Drupal'),
     '#description' => t('The name of this website.'),
     '#required' => TRUE,
   );
@@ -93,10 +93,10 @@ function opengraph_site_information() {
     '#type' => 'fieldset',
     '#title' => t('Contact information'),
   );
-  $form['contact_fs']['opengraph_email'] = array(
+  $form['contact_fs']['site_mail'] = array(
     '#type' => 'textfield',
     '#title' => t('E-mail address'),
-    '#default_value' => variable_get('opengraph_email', variable_get('site_mail', ini_get('sendmail_from'))),
+    '#default_value' => variable_get('site_mail', ini_get('sendmail_from')),
     '#description' => t("The <em>From</em> address in automated e-mails sent during registration and new password requests, and other notifications. (Use an address ending in your site's domain to help prevent this e-mail being flagged as spam.)"),
     '#required' => TRUE,
   );
