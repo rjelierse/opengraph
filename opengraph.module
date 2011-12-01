@@ -1,10 +1,10 @@
 <?php
 /**
- * @file
+ * OpenGraph module.
  *
- * Open Graph protocol implementation.
+ * This module implements the Open Graph protocol for Drupal.
  *
- * See http://ogp.me/ for details.
+ * @link http://ogp.me/
  */
 
 /**
@@ -14,9 +14,15 @@
  * selected namespace has been defined. If the namespace is not available,
  * the property is discarded.
  *
- * @param string $property The name of the property.
- * @param string $value The value of the property.
- * @param string $namespace The namespace of the property. Defaults to 'og'.
+ * @param string $property
+ *     The name of the property.
+ * @param string $value
+ *     The value of the property.
+ * @param string $namespace
+ *     The namespace of the property. Defaults to 'og'.
+ *
+ * @return array
+ *     The currently set properties.
  */
 function opengraph_set_property($property = '', $value = '', $namespace = 'og')
 {
@@ -49,7 +55,12 @@ function opengraph_set_property($property = '', $value = '', $namespace = 'og')
 }
 
 /**
- * Implementation of hook_menu()
+ * Configure the menu items for the Open Graph module.
+ *
+ * @return array
+ *     The menu items.
+ *
+ * @seealso hook_menu()
  */
 function opengraph_menu()
 {
@@ -67,9 +78,21 @@ function opengraph_menu()
 }
 
 /**
- * Implementation of hook_block()
+ * Define the Open Graph information block.
+ *
+ * @param string $op
+ *     The operation to perform.
+ * @param string $delta
+ *     The identifier of the block to perform the operation on.
+ * @param array $edit
+ *     The form data submitted when the block is configured.
+ *
+ * @return array
+ *     The data required by the operation, if applicable.
+ *
+ * @seealso hook_block()
  */
-function opengraph_block($op = 'list', $delta = 0, $edit = array())
+function opengraph_block($op = 'list', $delta = '', $edit = array())
 {
     switch ($op) {
         case 'list':
@@ -81,17 +104,17 @@ function opengraph_block($op = 'list', $delta = 0, $edit = array())
             );
 
         case 'view':
-            return opengraph_block_content($delta);
+            return opengraph_block_content();
     }
 }
 
 /**
  * Request the content for the block identified by $delta.
  *
- * @param $delta The identifier for the block the content is requested for.
- * @return Array with subject and content of the block.
+ * @return array
+ *     An array with the subject and content of the block.
  */
-function opengraph_block_content($delta)
+function opengraph_block_content()
 {
     $content = "<address>\n";
     
@@ -136,7 +159,11 @@ function opengraph_block_content($delta)
 }
 
 /**
- * Implementation of hook_init()
+ * Add default Open Graph Protocol information.
+ *
+ * Some of this information will be overwritten by other parts of the module, when applicable.
+ *
+ * @seealso hook_init()
  */
 function opengraph_init()
 {
@@ -147,17 +174,13 @@ function opengraph_init()
 
     opengraph_set_property('url', url(substr($_SERVER['REQUEST_URI'], $cut), array('absolute' => true)));
     opengraph_set_property('site_name', variable_get('site_name', 'Drupal'));
-//    opengraph_set_property('email', variable_get('site_mail', ini_get('sendmailfrom')));
     opengraph_set_property('image', url(substr(theme_get_setting('logo'), $cut), array('absolute' => true)));
 
-    $language = language_default();
-    opengraph_set_property('locale', 'nl_NL');
+    opengraph_set_property('locale', opengraph_get_language());
 
     // Set extended properties
     $properties = array(
         'description',
-//        'street-address', 'locality', 'region', 'postal-code', 'country-name',
-//        'phone_number', 'fax_number',
     );
     foreach ($properties as $property) {
         $value = variable_get('opengraph_' . str_replace('-', '_', $property), null);
@@ -172,7 +195,12 @@ function opengraph_init()
 }
 
 /**
- * Implementation of hook_namespaces()
+ * Adds additional namespaces to the page for use with the Open Graph Protocol.
+ *
+ * @return array
+ *     The namespaces used by the OpenGraph module.
+ *
+ * @seealso hook_namespaces()
  */
 function opengraph_namespaces()
 {
@@ -189,11 +217,18 @@ function opengraph_namespaces()
 }
 
 /**
- * Implementation of hook_user().
- *
  * Adds Open Graph properties to user pages.
+ *
+ * @param string $op
+ *     The current operation on the $account object.
+ * @param array $edit
+ *     The data submitted during editing of the $account.
+ * @param object $account
+ *     The account that is being processed.
+ * @param string $category
+ *     The category for which $account is being edited.
  */
-function opengraph_user($op, &$edit, &$account, $category = null) {
+function opengraph_user($op, &$edit, &$account, $category = '') {
     if ($op == 'view') {
         opengraph_set_property('type', 'profile');
 
@@ -207,11 +242,21 @@ function opengraph_user($op, &$edit, &$account, $category = null) {
 }
 
 /**
- * Implementation of hook_nodeapi().
+ * Adds Open Graph properties to nodes when it is the main item on the page viewed.
  *
- * Adds Open Graph properties to nodes.
+ * @param object $node
+ *     The node object that is being processed.
+ * @param string $op
+ *     The current operation for node processing.
+ * @param mixed $a3
+ *     When viewing a node: whether the node viewed is being viewed as a teaser.
+ *     When validating a node: the form that was used to edit the node.
+ * @param bool $a4
+ *     When viewing a node: whether the node viewed is being viewed is the main item on the page.
+ *
+ * @seealso hook_nodeapi()
  */
-function opengraph_nodeapi(&$node, $op, $a3 = null, $a4 = null) {
+function opengraph_nodeapi(&$node, $op, $a3 = null, $a4 = false) {
     if ($op == 'view' && $a4) {
         opengraph_set_property('type', 'article');
         opengraph_set_property('title', $node->title);
@@ -222,9 +267,12 @@ function opengraph_nodeapi(&$node, $op, $a3 = null, $a4 = null) {
 }
 
 /**
- * Implementation of hook_preprocess_page().
- *
  * Updates the $head variable with all set Open Graph properties.
+ *
+ * @param array $variables
+ *     The variables to use in the page.tpl.php template.
+ *
+ * @seealso template_preprocess_page()
  */
 function opengraph_preprocess_page(&$variables) {
     $graph = opengraph_set_property();
@@ -246,4 +294,24 @@ function opengraph_preprocess_page(&$variables) {
     
     // Update the $head variable.
     $variables['head'] = drupal_get_html_head();
+}
+
+/**
+ * Append a common ISO3166 territory identifier to the ISO639 language identifier.
+ *
+ * @return string
+ *     The formatted language code.
+ *
+ * @todo Add support for other languages.
+ */
+function opengraph_get_language() {
+    $language = user_preferred_language($GLOBALS['user']);
+
+    switch($language->language) {
+        case 'nl':
+            return 'nl_NL';
+        case 'en':
+        default:
+            return 'en_US';
+    }
 }
