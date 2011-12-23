@@ -167,14 +167,17 @@ function opengraph_block_content()
  */
 function opengraph_init()
 {
-    $cut = strlen(base_path());
+    global $theme_key, $base_path;
+    // We need to emulate init_theme() because it has not run yet.
+    $theme_key = variable_get('theme_default', 'garland');
+
     // Set default properties
     opengraph_set_property('type', variable_get('opengraph_type', 'website'));
     opengraph_set_property('title', variable_get('site_name', 'Drupal'));
 
-    opengraph_set_property('url', url(substr($_SERVER['REQUEST_URI'], $cut), array('absolute' => true)));
+    opengraph_set_property('url', url($_GET['q'], array('absolute' => true)));
     opengraph_set_property('site_name', variable_get('site_name', 'Drupal'));
-    opengraph_set_property('image', url(substr(theme_get_setting('logo'), $cut), array('absolute' => true)));
+    opengraph_set_property('image', url(substr(theme_get_setting('logo'), strlen($base_path)), array('absolute' => true)));
 
     opengraph_set_property('locale', opengraph_get_language());
 
@@ -227,6 +230,8 @@ function opengraph_namespaces()
  *     The account that is being processed.
  * @param string $category
  *     The category for which $account is being edited.
+ *
+ * @seealso hook_user()
  */
 function opengraph_user($op, &$edit, &$account, $category = '') {
     if ($op == 'view') {
